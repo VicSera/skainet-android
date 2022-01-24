@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/UserListFragment">
+
+    <fragment
+        android:id="@+id/FragmentLogin"
+        android:name="com.example.skainet_android.auth.login.LoginFragment"
+        android:label="@string/login"
+        tools:layout="@layout/fragment_login" />
+
+    <fragment
+        android:id="@+id/UserListFragment"
+        android:name="com.example.skainet_android.user.userList.UserListFragment"
+        android:label="@string/user_list_fragment_label"
+        tools:layout="@layout/fragment_user_list" >
+
+        <action
+            android:id="@+id/action_UserListFragment_to_UserEditFragment"
+            app:destination="@id/UserEditFragment" />
+        <action
+            android:id="@+id/action_UserListFragment_to_TripEditFragment"
+            app:destination="@id/TripEditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/UserEditFragment"
+        android:name="com.example.skainet_android.user.userEdit.UserEditFragment"
+        android:label="@string/user_edit_fragment_label"
+        tools:layout="@layout/fragment_user_edit">
+
+        <action
+            android:id="@+id/action_UserEditFragment_to_UserListFragment"
+            app:destination="@id/UserListFragment" />
+        <action
+            android:id="@+id/action_UserEditFragment_to_TripEditFragment"
+            app:destination="@id/TripEditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/TripEditFragment"
+        android:name="com.example.skainet_android.user.userEdit.trip.TripEditFragment"
+        android:label="@string/trip_edit_fragment_label"
+        tools:layout="@layout/fragment_user_edit">
+
+        <action
+            android:id="@+id/action_UserEditFragment_to_UserEditFragment"
+            app:destination="@id/UserEditFragment" />
+    </fragment>
+</navigation>
