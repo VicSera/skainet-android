@@ -1,17 +1,17 @@
 package com.example.skainet_android.background
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
-import android.location.LocationManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.location.*
 import android.os.Build
 import android.os.CancellationSignal
 import android.os.Looper
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -21,11 +21,14 @@ import java.util.concurrent.TimeUnit.SECONDS
 class BackgroundWorker(
     private val context: Context,
     workerParams: WorkerParameters
-) : Worker(context, workerParams) {
+) : Worker(context, workerParams), SensorEventListener {
+    var lastTemperatureReading = 0f
+
     @SuppressLint("MissingPermission")
-    @RequiresApi(Build.VERSION_CODES.R)
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun doWork(): Result {
         val locationManager = getSystemService(context, LocationManager::class.java)!!
+        val sensorManager = getSystemService(context, SensorManager::class.java)!!
 
         val executor = Executors.newSingleThreadExecutor().apply {
             execute {
@@ -33,7 +36,6 @@ class BackgroundWorker(
             }
         }
 
-        // perform long running operation
         val quotes = setOf(
             "“A journey of a thousand miles begins with a single step” – Lao Tzu",
             "“Do not follow where the path may lead. Go instead where there is no path and leave a trail” – Ralph Waldo Emerson",
@@ -47,19 +49,32 @@ class BackgroundWorker(
             "“Take only memories, leave only footprints ” – Chief Seattle"
         )
 
+        val sensor = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE)
+
         Looper.prepare()
+        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+
+        locationManager.getCurrentLocation(
+            LocationManager.GPS_PROVIDER,
+            CancellationSignal(),
+            executor,
+            {
+                Toast.makeText(context, "Location: ${it.latitude};${it.longitude}", Toast.LENGTH_SHORT).show()
+            })
+
         while (true) {
             quotes.forEach { quote ->
-                locationManager.getCurrentLocation(
-                    LocationManager.GPS_PROVIDER,
-                    CancellationSignal(),
-                    executor,
-                    {
-                        Toast.makeText(context, "${it.latitude};${it.longitude};$quote", Toast.LENGTH_LONG).show()
-                    })
                 SECONDS.sleep(10)
+                Toast.makeText(context, "$lastTemperatureReading;$quote", Toast.LENGTH_SHORT).show()
             }
         }
         return Result.success()
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        lastTemperatureReading = event?.values?.get(0) ?: 0f
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
     }
 }
