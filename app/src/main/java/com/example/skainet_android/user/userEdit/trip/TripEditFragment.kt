@@ -11,10 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.skainet_android.core.TAG
 import com.example.skainet_android.databinding.FragmentTripEditBinding
-import com.example.skainet_android.databinding.FragmentUserEditBinding
 import com.example.skainet_android.user.data.Trip
-import com.example.skainet_android.user.data.User
-import com.example.skainet_android.user.tripList.TripListAdapter
 
 class TripEditFragment : Fragment() {
     companion object {
