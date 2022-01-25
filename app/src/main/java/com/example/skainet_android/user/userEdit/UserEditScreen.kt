@@ -74,6 +74,9 @@ fun UserEditScreen(navController: NavController, userId: String? = null) {
             )
             
             Text(text = "Trips")
+            Button(onClick = { navController.navigate("tripEdit/new") }) {
+                Text(text = "Add trip")
+            }
             if (user.trips != null)
                 TripList(user.trips!!, navController)
 

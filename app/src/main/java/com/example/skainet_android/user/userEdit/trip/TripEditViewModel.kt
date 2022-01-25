@@ -22,7 +22,7 @@ class TripEditViewModel(tripId: String?) : ViewModel() {
     val completed: LiveData<Boolean> = mutableCompleted
 
     init {
-        tripId?.let { loadTrip(it) }
+        tripId?.let { if (tripId != "new") loadTrip(it) }
     }
 
     private fun loadTrip(tripId: String) {
