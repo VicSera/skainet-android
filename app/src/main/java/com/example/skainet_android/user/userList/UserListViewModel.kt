@@ -1,47 +1,41 @@
 package com.example.skainet_android.user.userList
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.skainet_android.user.data.User
-import com.example.skainet_android.core.Result
 import com.example.skainet_android.core.TAG
+import com.example.skainet_android.user.data.User
 import com.example.skainet_android.user.data.UserRepository
-import com.example.skainet_android.user.data.local.UserDatabase
 import kotlinx.coroutines.launch
 
-class UserListViewModel(application: Application) : AndroidViewModel(application) {
+class UserListViewModel : ViewModel() {
+    private val mutableUsers = MutableLiveData<List<User>>().apply { value = emptyList() }
     private val mutableLoading = MutableLiveData<Boolean>().apply { value = false }
-    private val mutableException = MutableLiveData<Exception>().apply { value = null }
+    private val mutableException = MutableLiveData<Throwable>().apply { value = null }
 
-    val users: LiveData<List<User>>
+    val users: LiveData<List<User>> = mutableUsers
     val loading: LiveData<Boolean> = mutableLoading
-    val loadingError: LiveData<Exception> = mutableException
-
-    val userRepository: UserRepository
+    val loadingError: LiveData<Throwable> = mutableException
 
     init {
-        val userDao = UserDatabase.getDatabase(application, viewModelScope).userDao()
-        userRepository = UserRepository(userDao)
-        users = userRepository.users
+        loadUsers()
     }
 
-    fun refresh() {
+    fun loadUsers() {
         viewModelScope.launch {
-            Log.v(TAG, "refresh...");
+            Log.v(TAG, "loadUsers...");
             mutableLoading.value = true
             mutableException.value = null
-            when (val result = userRepository.refresh()) {
-                is Result.Success -> {
-                    Log.d(TAG, "refresh succeeded");
-                }
-                is Result.Error -> {
-                    Log.w(TAG, "refresh failed", result.exception);
-                    mutableException.value = result.exception
-                }
+            val result = UserRepository.loadAll()
+            if (result.isSuccess) {
+                Log.d(TAG, "loadUsers succeeded");
+                mutableUsers.value = result.getOrNull()
+            }
+            if (result.isFailure) {
+                Log.w(TAG, "loadUsers failed", result.exceptionOrNull());
+                mutableException.value = result.exceptionOrNull()
             }
             mutableLoading.value = false
         }

@@ -3,12 +3,11 @@ package com.example.skainet_android.auth.data.remote
 import com.example.skainet_android.auth.data.TokenHolder
 import com.example.skainet_android.auth.data.Admin
 import com.example.skainet_android.core.Api
-import com.example.skainet_android.core.Result
 import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
 
-object RemoteAuthDataSource {
+object AuthDataSource {
     interface AuthService {
         @Headers("Content-Type: application/json")
         @POST("/api/auth/login")
@@ -19,9 +18,10 @@ object RemoteAuthDataSource {
 
     suspend fun login(admin: Admin): Result<TokenHolder> {
         try {
-            return Result.Success(authService.login(admin))
+            return Result.success(authService.login(admin))
         } catch (e: Exception) {
-            return Result.Error(e)
+            println(e)
+            return Result.failure(e)
         }
     }
 }

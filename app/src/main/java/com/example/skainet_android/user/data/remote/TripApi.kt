@@ -2,11 +2,16 @@ package com.example.skainet_android.user.data.remote
 
 import com.example.skainet_android.core.Api
 import com.example.skainet_android.user.data.Trip
-import com.example.skainet_android.user.data.User
 import retrofit2.http.*
 
 object TripApi {
     interface Service {
+        @GET("/api/trips")
+        suspend fun find(): List<Trip>
+
+        @GET("/api/trips/user/{id}")
+        suspend fun findForUser(@Path("id") userId: String): List<Trip>
+
         @GET("/api/trips/{id}")
         suspend fun read(@Path("id") tripId: String): Trip;
 

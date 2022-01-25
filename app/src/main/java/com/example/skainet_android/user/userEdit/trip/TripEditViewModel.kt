@@ -1,39 +1,46 @@
-package com.example.skainet_android.user.userEdit.trip
+package com.example.skainet_android.trip.tripEdit.trip
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.skainet_android.core.TAG
-import com.example.skainet_android.user.data.User
-import kotlinx.coroutines.launch
-import com.example.skainet_android.core.Result
+import com.example.skainet_android.trip.data.TripRepository
 import com.example.skainet_android.user.data.Trip
-import com.example.skainet_android.user.data.remote.TripApi
-import com.example.skainet_android.user.data.remote.UserApi
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 
-class TripEditViewModel(application: Application) : AndroidViewModel(application) {
+class TripEditViewModel(tripId: String?) : ViewModel() {
+    private val mutableTrip = MutableLiveData<Trip>().apply { value = null }
     private val mutableFetching = MutableLiveData<Boolean>().apply { value = false }
     private val mutableCompleted = MutableLiveData<Boolean>().apply { value = false }
-    private val mutableException = MutableLiveData<Exception>().apply { value = null }
+    private val mutableException = MutableLiveData<Throwable>().apply { value = null }
 
+    val trip: LiveData<Trip> = mutableTrip
     val fetching: LiveData<Boolean> = mutableFetching
-    val fetchingError: LiveData<Exception> = mutableException
+    val fetchingError: LiveData<Throwable> = mutableException
     val completed: LiveData<Boolean> = mutableCompleted
 
-    fun getItemById(tripId: String): LiveData<Trip> {
-        Log.v(TAG, "getTripById...")
-        val data = MutableLiveData<Trip>(null)
+    init {
+        tripId?.let { loadTrip(it) }
+    }
 
-        runBlocking {
-            viewModelScope.launch {
-                data.value = TripApi.service.read(tripId)
+    private fun loadTrip(tripId: String) {
+        viewModelScope.launch {
+            Log.i(TAG, "loadTrip...")
+            mutableFetching.value = true
+            mutableException.value = null
+            val result = TripRepository.load(tripId)
+            if (result.isSuccess) {
+                Log.d(TAG, "loadTrip succeeded");
+                mutableTrip.value = result.getOrNull()
+            }
+            if (result.isFailure) {
+                Log.w(TAG, "loadTrip failed", result.exceptionOrNull());
+                mutableException.value = result.exceptionOrNull()
             }
         }
-        return data
+        mutableFetching.value = false
     }
 
     fun saveOrUpdateTrip(trip: Trip) {
@@ -42,18 +49,17 @@ class TripEditViewModel(application: Application) : AndroidViewModel(application
             mutableFetching.value = true
             mutableException.value = null
             val result: Result<Trip> = if (trip.id.isNotEmpty()) {
-                Result.Success(TripApi.service.update(trip))
+                TripRepository.update(trip)
             } else {
-                Result.Success(TripApi.service.create(trip))
+                TripRepository.save(trip)
             }
-            when(result) {
-                is Result.Success -> {
-                    Log.d(TAG, "saveOrUpdateTrip succeeded");
-                }
-                is Result.Error -> {
-                    Log.w(TAG, "saveOrUpdateTrip failed", result.exception);
-                    mutableException.value = result.exception
-                }
+            if (result.isSuccess) {
+                Log.d(TAG, "saveOrUpdateTrip succeeded");
+                mutableTrip.value = result.getOrNull()
+            }
+            if (result.isFailure) {
+                Log.w(TAG, "saveOrUpdateTrip failed", result.exceptionOrNull());
+                mutableException.value = result.exceptionOrNull()
             }
             mutableCompleted.value = true
             mutableFetching.value = false
