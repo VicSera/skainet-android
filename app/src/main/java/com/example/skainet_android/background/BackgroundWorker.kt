@@ -1,17 +1,38 @@
 package com.example.skainet_android.background
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.os.Build
+import android.os.CancellationSignal
 import android.os.Looper
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit.SECONDS
 
 class BackgroundWorker(
     private val context: Context,
     workerParams: WorkerParameters
 ) : Worker(context, workerParams) {
+    @SuppressLint("MissingPermission")
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun doWork(): Result {
+        val locationManager = getSystemService(context, LocationManager::class.java)!!
+
+        val executor = Executors.newSingleThreadExecutor().apply {
+            execute {
+                Looper.prepare()
+            }
+        }
+
         // perform long running operation
         val quotes = setOf(
             "“A journey of a thousand miles begins with a single step” – Lao Tzu",
@@ -28,8 +49,14 @@ class BackgroundWorker(
 
         Looper.prepare()
         while (true) {
-            quotes.forEach {
-                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            quotes.forEach { quote ->
+                locationManager.getCurrentLocation(
+                    LocationManager.GPS_PROVIDER,
+                    CancellationSignal(),
+                    executor,
+                    {
+                        Toast.makeText(context, "${it.latitude};${it.longitude};$quote", Toast.LENGTH_LONG).show()
+                    })
                 SECONDS.sleep(10)
             }
         }
